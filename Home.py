@@ -1,10 +1,23 @@
-import conda
 import os
 
-conda_file_dir = conda.__file__
-conda_dir = conda_file_dir.split('lib')[0]
-proj_lib = os.path.join(os.path.join(conda_dir, 'share'), 'proj')
-os.environ["PROJ_LIB"] = proj_lib
+def default_proj_lib():
+    proj_lib = os.getenv('PROJ_LIB')
+    if proj_lib not in (None, 'PROJ_LIB'):
+        return proj_lib
+    try:
+        import conda
+    except ImportError:
+        conda = None
+    if conda is not None or os.getenv('CONDA_PREFIX') is None:
+        conda_file_dir = conda.__file__
+        conda_dir = conda_file_dir.split('lib')[0]
+        proj_lib = os.path.join(os.path.join(conda_dir, 'share'), 'proj')
+        if os.path.exists(proj_lib):
+            return proj_lib
+        return None
+    return None
+
+default_proj_lib()
 
 import streamlit as st
 import pandas as pd
