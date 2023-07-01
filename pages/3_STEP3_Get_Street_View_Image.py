@@ -26,12 +26,14 @@ def get_baidu_sv_image():
     '''
     :return: tempfile.TemporaryDirectory(), st.progress(), list, list
     '''
-    st.session_state.image_dataset = {}
+    if 'image_dataset' in st.session_state:
+        del st.session_state['image_dataset']
+    st.session_state.image_dataset = None
+
     my_bar = st.progress(0, text='### 开始爬取...')
     st.experimental_set_query_params(disabled=True)
     root = tempfile.TemporaryDirectory()
-    img_dir = os.path.join(root.name, 'images')
-    os.makedirs(img_dir)
+
     img_error_fn = 'error_road_intersection.csv'
     svid_error_fn = 'svid_none.csv'
 
@@ -56,7 +58,7 @@ def get_baidu_sv_image():
             directions.append('270')
 
     for i in range(len(data)):
-        progress_text = '### 正在爬取第{}个采样点...'.format(i+1)
+        progress_text = '### 正在爬取第{}个采样点...'.format(i + 1)
         progress_float = round(i / len(data), 3)
         my_bar.progress(progress_float, text=progress_text)
         # st.write('爬取Point No. {}...'.format(i + 1))
@@ -96,20 +98,22 @@ def get_baidu_sv_image():
                 'height': 320
             }
             img = gbsv.get_street_view_image(url, params)
-                       
+
             if img is None:
                 error_data = data.iloc[i, :].tolist()
                 error_data.append(directions[h])
                 error_img.append(error_data)
-                st.write('image error!')
 
             if img is not None:
-                img_path_temp = os.path.join(root.name) + r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs)
-                with open(os.path.join(root.name, r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs)),
+                # # 在本地请用这个代码
+                # with open(os.path.join(root.name) + r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs),
+                #           "wb") as f:
+                #     f.write(img)
+                # 在服务器上请用这个代码
+                with open(os.path.join(root.name,r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs)),
                           "wb") as f:
                     f.write(img)
-                st.image(img)
-                # st.session_state.image_dataset[img_path_temp] = img
+
             progress_float = round((i * len(directions) + h + 1) / (len(data) * len(directions)), 3)
             progress_text = '### 爬取进度：{:.2f}%'.format(progress_float * 100)
             my_bar.progress(progress_float, text=progress_text)
@@ -120,8 +124,9 @@ def get_baidu_sv_image():
     if len(error_img) > 0:
         gbsv.write_csv(os.path.join(root.name, img_error_fn), error_img, header)
     st.session_state.submitted = True
-    st.subheader('数据采集完成！共爬取{}个点，其中{}个点获取svid失败，{}个点获取图片失败。'.format(count - 1, len(svid_none),
-                                                                                       len(error_img)))
+    st.subheader(
+        '数据采集完成！共爬取{}个点，其中{}个点获取svid失败，{}个点获取图片失败。'.format(count - 1, len(svid_none),
+                                                                                      len(error_img)))
 
     st.experimental_set_query_params(disabled=False)
 
@@ -136,11 +141,12 @@ def get_baidu_sv_image():
                     file_path = os.path.join(_root, file)
                     arc_name = os.path.relpath(file_path, root.name)
                     zf.write(file_path, arcname=arc_name)
-                    st.write(file_path)
-    root.cleanup()
-    st.session_state.images = zip_root
 
+    st.session_state.images = zip_root
+    st.session_state.image_dataset = root
+    # TODO 这里的st.session_state.image_dataset保存的是所有图片的路径，可以通过Image.read()读取图片
     return zip_root, my_bar, svid_none, error_img
+
 
 def creat_zip_download(_zip_root):
     # 以二进制格式打开zip文件
@@ -155,6 +161,7 @@ def creat_zip_download(_zip_root):
         mime='application/zip',
         on_click=mark_downloaded
     )
+
 
 def mark_downloaded():
     if "download" not in st.session_state.keys():
@@ -230,5 +237,3 @@ if __name__ == '__main__':
                 st.subheader('数据采集完成！共爬取{}个点，其中{}个点获取svid失败，{}个点获取图片失败。'
                              .format(len(st.session_state.input_data), len(svid_none), len(erro_img)))
                 creat_zip_download(st.session_state.images)
-
-
