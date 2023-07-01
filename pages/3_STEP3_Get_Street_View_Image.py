@@ -102,9 +102,11 @@ def get_baidu_sv_image():
                 error_img.append(error_data)
 
             if img is not None:
+                img_path_temp = os.path.join(root.name) + r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs)
                 with open(os.path.join(root.name) + r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs),
                           "wb") as f:
                     f.write(img)
+                st.write(img_path_temp)
             progress_float = round((i * len(directions) + h + 1) / (len(data) * len(directions)), 3)
             progress_text = '### 爬取进度：{:.2f}%'.format(progress_float * 100)
             my_bar.progress(progress_float, text=progress_text)
@@ -131,6 +133,7 @@ def get_baidu_sv_image():
                     file_path = os.path.join(_root, file)
                     arc_name = os.path.relpath(file_path, root.name)
                     zf.write(file_path, arcname=arc_name)
+                    st.write(file_path)
     root.cleanup()
     st.session_state.images = zip_root
 
