@@ -22,7 +22,7 @@ def draw_map(_data):
         ).add_to(m)
     m.fit_bounds(lnglat_lists)
     # call to render Folium map in Streamlit
-    st_data = st_folium(m, width=725, height=450)
+    st_data = st_folium(m, width=725, height=350)
     return st_data
 
 
@@ -46,14 +46,12 @@ if __name__ == '__main__':
                 st.session_state.draw_map = False
             else:
                 st.session_state.draw_map = True
-            st.title("Step2: 确认采样点位置")
+            st.title("Step:two: 确认采样点位置")
             st.subheader(":point_down:下图为采样点位置分布图")
             if st.session_state.input_type == 'geojson':
                 text = """
-                - 上传的文件类型为`GeoJSON`
-                - 如果下方地图无法显示，请打开**VPN**
-                - :grey_exclamation: 已自动设置数据的地理坐标系为`WGS84`
-                - 请检查采样点位置是否正确 
+                - 上传的文件类型为`GeoJSON`，如果下方地图无法显示，请打开**VPN**
+                - :grey_exclamation: 已自动设置数据的地理坐标系为`WGS84`，请检查采样点位置是否正确 
                 """
                 st.markdown(text)
                 if st.session_state.draw_map:
@@ -67,10 +65,8 @@ if __name__ == '__main__':
 
             if st.session_state.input_type == 'csv':
                 text = """
-                - 上传的文件类型为`CSV`
-                - 如果下方地图无法显示，请打开**VPN**
-                - :grey_exclamation: 请再次确认点数据的地理坐标系为`WGS84`
-                - 请检查采样点位置是否正确 
+                - 上传的文件类型为`CSV`，如果下方地图无法显示，请打开**VPN**
+                - :grey_exclamation: 请再次确认点数据的地理坐标系为`WGS84`，请检查采样点位置是否正确 
                 """
                 st.markdown(text)
                 data = st.session_state.input_data
