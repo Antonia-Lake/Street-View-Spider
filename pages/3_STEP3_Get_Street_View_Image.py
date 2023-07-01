@@ -37,7 +37,12 @@ def get_baidu_sv_image():
     img_error_fn = 'error_road_intersection.csv'
     svid_error_fn = 'svid_none.csv'
 
-    data = st.session_state.input_data
+    data = None
+    if st.session_state.input_type == 'geojson' or st.session_state.input_type == 'shp':
+        data = st.session_state.input_data[0]
+    else:
+        data = st.session_state.input_data
+
     header = data.columns.tolist()
 
     error_img = []
@@ -105,7 +110,7 @@ def get_baidu_sv_image():
                 error_img.append(error_data)
 
             if img is not None:
-                # # 在本地请用这个代码
+                # 在本地请用这个代码
                 # with open(os.path.join(root.name) + r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs),
                 #           "wb") as f:
                 #     f.write(img)
@@ -124,56 +129,18 @@ def get_baidu_sv_image():
     if len(error_img) > 0:
         gbsv.write_csv(os.path.join(root.name, img_error_fn), error_img, header)
     st.session_state.submitted = True
-    st.subheader(
-        '数据采集完成！共爬取{}个点，其中{}个点获取svid失败，{}个点获取图片失败。'.format(count - 1, len(svid_none),
-                                                                                      len(error_img)))
 
     st.experimental_set_query_params(disabled=False)
-
-    # 将图片和csv打包成zip文件
-    zip_root = tempfile.TemporaryDirectory()
-    zip_file = os.path.join(zip_root.name, 'street_view_data.zip')
-
-    with zipfile.ZipFile(zip_file, 'w') as zf:
-        for _root, dirs, files in os.walk(root.name):
-            for file in files:
-                if file.endswith('.png') or file.endswith('.csv'):
-                    file_path = os.path.join(_root, file)
-                    arc_name = os.path.relpath(file_path, root.name)
-                    zf.write(file_path, arcname=arc_name)
-
-    st.session_state.images = zip_root
     st.session_state.image_dataset = root
     # TODO 这里的st.session_state.image_dataset保存的是所有图片的路径，可以通过Image.read()读取图片
-    return zip_root, my_bar, svid_none, error_img
+    return my_bar, svid_none, error_img
 
-
-def creat_zip_download(_zip_root):
-    # 以二进制格式打开zip文件
-    zip_file = os.path.join(_zip_root.name, 'street_view_data.zip')
-    with open(zip_file, 'rb') as f:
-        zip_data = f.read()
-
-    st.download_button(
-        label="点击下载图片数据(.png)和错误信息文件(.csv)",
-        data=zip_data,
-        file_name='street_view_data.zip',
-        mime='application/zip',
-        on_click=mark_downloaded
-    )
-
-
-def mark_downloaded():
-    if "download" not in st.session_state.keys():
-        st.session_state.download = False
-    else:
-        st.session_state.download = True
 
 
 if __name__ == '__main__':
     check = check_steps()
     if check[0]:
-        st.title("Step3: 获取街景图片")
+        st.title("Step:three: 获取街景图片")
         with st.form(key='my_form'):
             st.markdown("#### 选择需要获取的街景图像拍摄方位（默认全部获取）")
             if 'direction' not in st.session_state.keys():
@@ -224,16 +191,12 @@ if __name__ == '__main__':
             st.subheader(":exclamation:请耐心等待，采集过程中请勿切换界面...")
             st.experimental_set_query_params(disabled=True)
             # 在后台运行程序
-            st.session_state.images, st.session_state.mybar, st.session_state.svid_none, st.session_state.erro_img = get_baidu_sv_image()
-            creat_zip_download(st.session_state.images)
+            st.session_state.mybar, st.session_state.svid_none, st.session_state.erro_img = get_baidu_sv_image()
 
-        if 'submitted' not in st.session_state.keys():
-            st.session_state.submitted = False
-            st.subheader("是'submitted' not in st.session_state.keys():")
-        elif st.session_state.submitted:
-            if ('download' in st.session_state.keys()):
-                svid_none = st.session_state.svid_none
-                erro_img = st.session_state.erro_img
-                st.subheader('数据采集完成！共爬取{}个点，其中{}个点获取svid失败，{}个点获取图片失败。'
-                             .format(len(st.session_state.input_data), len(svid_none), len(erro_img)))
-                creat_zip_download(st.session_state.images)
+        if st.session_state.submitted:
+            svid_none = st.session_state.svid_none
+            erro_img = st.session_state.erro_img
+            st.markdown('数据采集完成！共爬取{}个点，其中{}个点获取svid失败，{}个点获取图片失败。'
+                         .format(len(st.session_state.input_data), len(svid_none), len(erro_img)))
+            st.subheader(":point_left:请点击左侧菜单栏的STEP4，进行下一步操作")
+
