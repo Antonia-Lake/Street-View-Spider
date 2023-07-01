@@ -35,7 +35,7 @@ def check_steps():
 
 
 def generate_model(model_path='./model'):
-    model = gluoncv.model_zoo.get_model('deeplab_resnet101_citys', pretrained=True, root=model_path)
+    model = gluoncv.model_zoo.get_model('deeplab_resnet101_citys', pretrained=True)
     return model
 
 
@@ -111,8 +111,8 @@ def create_segdata_download():
                 _mask_fn = file.split('.png')[0] + '_mask.png'
                 _mask.save(os.path.join(temp_dir.name, _mask_fn))
                 lng, lat, dir = file.split('_')[:3]
-                lng = float(lng)
-                lat = float(lat)
+                lng = float(lng.replace('\\',''))
+                lat = float(lat.replace('\\',''))
                 if dir == '0':
                     dir = 'n_'
                 elif dir == '90':
