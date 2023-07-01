@@ -26,6 +26,7 @@ def get_baidu_sv_image():
     '''
     :return: tempfile.TemporaryDirectory(), st.progress(), list, list
     '''
+    st.session_state.image_dataset = {}
     my_bar = st.progress(0, text='### 开始爬取...')
     st.experimental_set_query_params(disabled=True)
     root = tempfile.TemporaryDirectory()
@@ -95,9 +96,7 @@ def get_baidu_sv_image():
                 'height': 320
             }
             img = gbsv.get_street_view_image(url, params)
-            
-            st.image(img)
-            
+                       
             if img is None:
                 error_data = data.iloc[i, :].tolist()
                 error_data.append(directions[h])
@@ -106,10 +105,11 @@ def get_baidu_sv_image():
 
             if img is not None:
                 img_path_temp = os.path.join(root.name) + r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs)
-                with open(os.path.join(root.name) + r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs),
+                with open(os.path.join(root.name, r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs)),
                           "wb") as f:
                     f.write(img)
-                st.write(img_path_temp)
+                st.image(img)
+                # st.session_state.image_dataset[img_path_temp] = img
             progress_float = round((i * len(directions) + h + 1) / (len(data) * len(directions)), 3)
             progress_text = '### 爬取进度：{:.2f}%'.format(progress_float * 100)
             my_bar.progress(progress_float, text=progress_text)
