@@ -96,7 +96,7 @@ def get_baidu_sv_image():
             }
             img = gbsv.get_street_view_image(url, params)
             
-            st.write(img)
+            st.image(img)
             
             if img is None:
                 error_data = data.iloc[i, :].tolist()
