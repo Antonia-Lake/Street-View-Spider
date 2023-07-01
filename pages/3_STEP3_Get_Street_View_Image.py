@@ -95,11 +95,14 @@ def get_baidu_sv_image():
                 'height': 320
             }
             img = gbsv.get_street_view_image(url, params)
-
+            
+            st.write(img)
+            
             if img is None:
                 error_data = data.iloc[i, :].tolist()
                 error_data.append(directions[h])
                 error_img.append(error_data)
+                st.write('image error!')
 
             if img is not None:
                 img_path_temp = os.path.join(root.name) + r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs)
