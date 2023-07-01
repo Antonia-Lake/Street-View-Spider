@@ -1,4 +1,6 @@
-numpy
+numpy==1.23.5
+mxnet -f https://dist.mxnet.io/python/cpu
+gluoncv
 matplotlib
 folium
 geopandas
