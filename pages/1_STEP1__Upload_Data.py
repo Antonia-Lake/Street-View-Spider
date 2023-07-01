@@ -5,6 +5,7 @@ import numpy as np
 
 st.set_page_config(page_title="上传采样点数据", page_icon=":one:")
 
+
 def trans_gdf_to_df(gdf):
     geom = gdf.geometry.apply(lambda x: x.wkt.replace('POINT (', '').replace(')', '').split(' '))
     geom = pd.DataFrame(geom.tolist(), columns=['lng', 'lat'])
@@ -13,53 +14,112 @@ def trans_gdf_to_df(gdf):
     return _data
 
 
+def display_data(_data):
+    # 展示文件信息
+    total_lines = len(_data)
+    if total_lines > 5:
+        header = st.subheader("文件预览（前5行），共{}行".format(total_lines))
+    else:
+        header = st.subheader("文件预览，共{}行".format(total_lines))
+    df = st.dataframe(_data.head(5))
+    return header, df
+
+
+def check_csv(csv_df):
+    if len(csv_df) == 0:
+        warning = ':warning: 请勿上传空文件！'
+        return False, warning
+    elif (type(csv_df.iloc[0, 0]) != np.float64) or (type(csv_df.iloc[0, 1]) != np.float64):
+        warning = ':warning:请保证csv文件的经纬度数据处于第1列和第2列！'
+        return False, warning
+    return True, None
+
+
+def check_geojson_shp(geo_df):
+    if len(geo_df) == 0:
+        warning = ':warning: 请勿上传空文件！'
+        return False, warning
+    elif geo_df.geom_type[0] != 'Point':
+        warning = ':warning: 请上传点数据！'
+        return False, warning
+    return True, None
+
+
+# 上传数据页面需要用到的session_state
+# input_data: 上传的数据 这个不要变了，后面会用到
+# input_type: 上传的数据类型，csv/geojson
+# step1_upload_pressed: 上传按钮是否被按下
+# 如果没有被按下过，就创建这个key，设置值为None, 然后初始化页面, 在里面设置这个键值
+# 之后检查上传数据的类型 flag
+# 如果是csv，用check_csv()函数检查是否符合要求
+# 如果是geojson，用check_geojson()函数检查是否符合要求
 
 def init_page():
-    # 添加一个文件选择器，并在选择后读取文件，获取文件的绝对路径
     subheader = st.subheader("请选择街景采样点数据，文件类型为CSV/GeoJSON")
-    file = st.file_uploader(':grey_exclamation: 如果上传CSV文件，请保证经纬度数据处于第1列和第2列',type=["csv", "geojson"])
-    # 读取文件，并显示在页面上，限制显示10行
+    file = st.file_uploader(':grey_exclamation: 如果上传CSV文件，请保证经纬度数据处于第1列和第2列',
+                            type=["csv", "geojson"])
 
-    if file is not None:
+    if file != st.session_state['step1_previous_file']:
+        st.session_state.step1_upload_pressed = True
         if file.name.endswith('.csv'):
             st.session_state.input_type = 'csv'
-            subheader.subheader("文件上传成功！")
             data = pd.read_csv(file)
-            st.session_state.input_data = data
-            total_lines = len(data)
-            header = st.subheader("文件预览（前5行），共{}行".format(total_lines))
-            df = st.dataframe(data.head(5))
-            if type(data.iloc[0,0]) != np.float64 or type(data.iloc[0,1]) != np.float64:
-                st.subheader(':warning:请保证csv文件的经纬度数据处于第1列和第2列！')
+
+            col = data.columns.tolist()
+            col.remove(col[0])
+            col.insert(0, 'lng')
+            col.remove(col[1])
+            col.insert(1, 'lat')
+            data = pd.DataFrame(data, columns=col)
+
+            # 检查csv文件
+            flag, warning = check_csv(data)
+            if (not flag) and ('空' in warning):
+                st.subheader(warning)
+                st.subheader(":point_up: 请重新上传文件")
+            elif not flag:
+                display_data(data)
+                st.subheader(warning)
+                st.subheader(":point_up: 请重新上传文件")
+            else:
+                header, df = display_data(data)
+                st.session_state.input_data = data
+                st.session_state.input_type = 'csv'
+                subheader.subheader("文件上传成功！")
+
 
         elif file.name.endswith('.geojson'):
             gdf = gpd.read_file(file)
             # 检查矢量数据是否为点数据
-            if gdf.geom_type[0] != 'Point':
-                st.subheader(':warning:矢量数据不是点数据，请重新选择！')
+            flag, warning = check_geojson_shp(gdf)
+
+            if not flag:
+                display_data(trans_gdf_to_df(gdf))
+                st.subheader(warning)
+                st.subheader(":point_up: 请重新上传文件")
+                # 如果点击了重新上传按钮，就清空页面
+
             else:
+                data = trans_gdf_to_df(gdf)
+                header, df = display_data(data)
+                st.session_state.input_data = (data, gdf)
                 st.session_state.input_type = 'geojson'
                 subheader.subheader("文件上传成功！")
-                data = trans_gdf_to_df(gdf)
-                st.session_state.input_data = (data, gdf)
-                total_lines = len(data)
-                header = st.subheader("文件预览（前5行），共{}行".format(total_lines))
-                df = st.dataframe(data.head(5))
         ## TODO 有空的话再加上shp文件的读取
         else:
             st.subheader(':warning:文件格式错误，请重新选择。')
 
-def display_data(_data):
-    # 展示文件信息
-    total_lines = len(_data)
-    header = st.subheader("文件预览（前5行），共{}行".format(total_lines))
-    df = st.dataframe(_data.head(5))
-    return header, df
+
+#
 
 if __name__ == '__main__':
-    st.title("Step1: 上传街景采样点数据")
+    st.title("Step:one: 上传街景采样点数据")
+    if 'step1_previous_file' not in st.session_state:
+        st.session_state.step1_previous_file = None
+
     if 'input_data' not in st.session_state.keys():
-        init_page() # 这里创建了session_state.input_data
+        init_page()  # 这里创建了session_state.input_data
+        # 如果点击了重新上传按钮，就清空页面
     # 当切换页面的时候
     else:
         if st.session_state is not None:
@@ -78,6 +138,7 @@ if __name__ == '__main__':
                 df.empty()
                 for key in st.session_state.keys():
                     del st.session_state[key]
+                st.session_state.step1_previous_file = None
                 init_page()
     if 'input_data' in st.session_state.keys():
         if st.session_state.input_data is not None:
