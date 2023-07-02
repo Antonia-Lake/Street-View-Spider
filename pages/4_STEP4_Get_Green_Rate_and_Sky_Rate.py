@@ -153,8 +153,8 @@ def create_segdata_download():
 
 
 def trans_df_to_gdf(df):
-    df = df.drop(columns=['geometry'], inplace=False)
-    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lng, df.lat))
+    df_ = df.drop(columns=['geometry'], inplace=False)
+    gdf = gpd.GeoDataFrame(df_, geometry=gpd.points_from_xy(df_.lng, df_.lat))
     # 删除'geometry'列
     gdf.crs = 'EPSG:4326'
     return gdf
