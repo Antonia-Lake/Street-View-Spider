@@ -111,7 +111,7 @@ def create_segdata_download():
                 _mask.save(os.path.join(temp_dir.name, _mask_fn))
                 lng, lat, dir = file.split('_')[:3]
                 lng = float(lng.replace('\\', ''))
-                lat = float(lng.replace('\\', ''))
+                lat = float(lat.replace('\\', ''))
                 if dir == '0':
                     dir = 'n_'
                 elif dir == '90':
