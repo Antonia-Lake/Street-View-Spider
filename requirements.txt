@@ -4,5 +4,6 @@ gluoncv
 matplotlib
 folium
 geopandas
+requests
 streamlit
 streamlit-folium
