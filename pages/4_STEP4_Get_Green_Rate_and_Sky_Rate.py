@@ -33,10 +33,10 @@ def check_steps():
     else:
         return True, None
 
-
 @st.cache_resource
 def generate_model(model_path='./model'):
     return gluoncv.model_zoo.get_model('deeplab_resnet101_citys', pretrained=True, root=model_path)
+
 
 def segment_single_pic(img_path, model, show=True):
     img = image.imread(img_path)
@@ -110,8 +110,8 @@ def create_segdata_download():
                 _mask_fn = file.split('.png')[0] + '_mask.png'
                 _mask.save(os.path.join(temp_dir.name, _mask_fn))
                 lng, lat, dir = file.split('_')[:3]
-                lng = float(lng.replace('\\',''))
-                lat = float(lat.replace('\\',''))
+                lng = float(lng)
+                lat = float(lat)
                 if dir == '0':
                     dir = 'n_'
                 elif dir == '90':
@@ -142,16 +142,20 @@ def create_segdata_download():
 
     with open(zip_file, 'rb') as f:
         zip_data = f.read()
-    with open(os.path.join(temp_result_dir.name, 'green_sky_rate.csv'), 'rb') as f:
-        result_data = f.read()
+    if st.session_state.input_type == 'csv':
+        with open(os.path.join(temp_result_dir.name, 'green_sky_rate.csv'), 'rb') as f:
+            result_data = f.read()
+    elif st.session_state.input_type == 'geojson':
+        with open(os.path.join(temp_result_dir.name, 'green_sky_rate.geojson'), 'rb') as f:
+            result_data = f.read()
 
     return zip_data, result_data, zip_root, temp_result_dir
 
 
 def trans_df_to_gdf(df):
+    df = df.drop(columns=['geometry'], inplace=False)
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lng, df.lat))
     # 删除'geometry'列
-    gdf.drop(columns=['geometry'], inplace=True)
     gdf.crs = 'EPSG:4326'
     return gdf
 
@@ -254,6 +258,10 @@ if __name__ == '__main__':
             st.markdown('#### 如果您想获取所有街景图像的语义分割结果、绿视率和天空率')
             st.markdown('#### :point_down: 请点击下方按钮')
 
+            if 'step4_seg_loaded' not in st.session_state.keys():
+                temp_notice = st.markdown(
+                    '##### :exclamation: 语义分割结果、绿视率和天空率正在计算中，可能需要一些时间，请耐心等待...')
+
             st.download_button(
                 label="点击下载街景图片和错误信息压缩包(.zip)",
                 data=creat_svdata_zip_download(),
@@ -266,6 +274,7 @@ if __name__ == '__main__':
                 st.session_state.step4_seg_loaded = create_segdata_download()
                 st.session_state.step4_seg_loaded[2].cleanup()
                 st.session_state.step4_seg_loaded[3].cleanup()
+                temp_notice.empty()
 
             st.download_button(
                 label="点击下载语义分割图像(.zip)",
@@ -287,3 +296,6 @@ if __name__ == '__main__':
                 mime=mime_,
                 key='rate'
             )
+
+            st.markdown('#### 到这里，您已经完成了所有的步骤:sparkling_heart:')
+            st.markdown('#### 如果您喜欢这个项目，欢迎star:star:[我的GitHub仓库](https://github.com/Antonia-Lake/Street-View-AOI-Spider):hugging_face:')
