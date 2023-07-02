@@ -55,7 +55,7 @@ def check_geojson_shp(geo_df):
 # 如果是geojson，用check_geojson()函数检查是否符合要求
 
 def init_page():
-    subheader = st.subheader("您可以选择使用示例数据，或上传自己的数据，文件类型为CSV/GeoJSON")
+    subheader = st.subheader("您可以选择使用示例数据，或上传自己的数据\n### 文件类型为CSV/GeoJSON")
     radio = st.radio("*默认使用示例数据", ['使用示例数据', '不，我要上传自己的数据'],horizontal=True)
     if radio == '使用示例数据':
         csv_data_path = './example_data/point.csv'
