@@ -34,10 +34,9 @@ def check_steps():
         return True, None
 
 
+@st.cache_resource
 def generate_model(model_path='./model'):
-    model = gluoncv.model_zoo.get_model('deeplab_resnet101_citys', pretrained=True)
-    return model
-
+    return gluoncv.model_zoo.get_model('deeplab_resnet101_citys', pretrained=True, root=model_path)
 
 def segment_single_pic(img_path, model, show=True):
     img = image.imread(img_path)
