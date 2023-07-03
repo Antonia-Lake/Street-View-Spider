@@ -60,7 +60,7 @@ def init_page():
     if radio == '使用示例数据':
         csv_data_path = './example_data/point.csv'
         geojson_data_path = './example_data/pointjson.geojson'
-        radio2 = st.radio("请选择要使用的示例数据", ['CSV', 'GeoJSON'])
+        radio2 = st.radio("请选择要使用的示例数据", ['CSV', 'GeoJSON'], horizontal=True)
         if radio2 == 'CSV':
             data = pd.read_csv(csv_data_path)
             header, df = display_data(data)
