@@ -214,7 +214,6 @@ if __name__ == '__main__':
             st.session_state.file_name_list = []
             for r, d, files in os.walk(st.session_state.image_dataset.name):
                 for file in files:
-                    st.write(file)
                     if file.endswith('.png'):
                         st.session_state.file_name_list.append(file)
 
