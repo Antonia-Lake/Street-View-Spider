@@ -1,5 +1,6 @@
 import streamlit as st
 import base64
+from PIL import Image
 
 st.set_page_config(page_title="百度街景数据采集+街景语义分割工具", page_icon=":house_with_garden:")
 text = """
@@ -54,13 +55,28 @@ with col4:
         - MXNet
         - GluonCV
         """)
-
+st.markdown("""#### 关于语义分割 
+<b>语义分割</b>是计算机视觉领域的一个重要研究方向，
+其目的是将图像中的每个像素点分配到特定的类别中，从而实现对图像的像素级别的理解。\\
+<br>
+<b>语义分割</b>的结果可以用于计算<b><font color=#186cb0>绿视率</font></b>和<b><font color=#186cb0>天空率</font></b>，具体计算方法如下：
+- <b><font color=#186cb0>绿视率</font></b>：街景图像中植被像素点的数量占总像素点的比例。
+- <b><font color=#186cb0>天空率</font></b>：街景图像中天空像素点的数量占总像素点的比例。
+<br>
+本项目使用的是在Cityscapes数据集上预训练的<b><font color=#186cb0>DeepLabV3</font></b>模型，
+以<b><font color=#186cb0>ResNet101</font></b>作为backbone，
+在<b><font color=#186cb0>街景图像</font></b>上的语义分割效果较好。\\
+<br>
+如果您希望更换预训练模型，可以在[项目仓库](https://github.com/Antonia-Lake/Street-View-AOI-Spider)下载项目源代码，
+并参考[GluonCV](https://cv.gluon.ai/model_zoo/segmentation.html)官方文档，更换预训练模型。
+""", unsafe_allow_html=True)
 
 st.markdown("""
 ## :four: 项目功能
 ### 4.1 使用说明
 - 用户可以使用示例数据；如果想使用个人数据，需要上传街景图像的<b>经纬度位置（点数据）</b>，文件格式为
-<b><font color=#478e68>CSV</font></b> 或 <b><font color=#478e68>GeoJSON</font></b>
+<b><font color=#478e68>CSV</font></b> 或 <b><font color=#478e68>GeoJSON</font></b> \\
+:exclamation: 注意，不建议一次上传大于100个点数据，以免被接口被封禁 :exclamation:
 """, unsafe_allow_html=True)
 
 file = open(r"./gif/step1.gif", 'rb')
@@ -74,7 +90,6 @@ st.markdown('')
 st.markdown("""
 - 上传数据后，需要在Step2页面确认采样点信息
 """, unsafe_allow_html=True)
-
 
 file = open(r"./gif/step2.gif", 'rb')
 contents = file.read()
@@ -100,7 +115,6 @@ st.markdown("""
 - 采集数据后，使用<b>语义分割模型</b>对街景图像进行分割，得到街景中的语义内容，并<b>计算绿视率和天空率</b>
 """, unsafe_allow_html=True)
 
-
 file = open(r"./gif/step4_1.gif", 'rb')
 contents = file.read()
 data_url = base64.b64encode(contents).decode('utf-8-sig')
@@ -113,7 +127,6 @@ st.markdown("""
 - 最后，用户可以<b>点击下载</b>采集的街景数据、语义分割结果、绿视率和天空率
 """, unsafe_allow_html=True)
 
-
 file = open(r"./gif/step4_2.gif", 'rb')
 contents = file.read()
 data_url = base64.b64encode(contents).decode('utf-8-sig')
@@ -125,14 +138,66 @@ st.markdown('')
 st.markdown("""
 - 下图为获得的街景和语义分割图像
 """, unsafe_allow_html=True)
-
-st.markdown('![image](https://github.com/Antonia-Lake/Street-View-AOI-Spider/blob/main/gif/download.png)')
+img = Image.open("./gif/download.png")
+st.image(img, use_column_width=True)
 st.markdown('')
+img.close()
+
+# 4.2 项目稳定性
+st.markdown("""
+### 4.2 项目稳定性说明
+<b>当用户未按照要求操作时，会在页面中提示错误信息，提醒用户按照正确流程操作，避免程序崩溃。</b> <br>
+<b>以下为部分错误的提示信息：</b>
+- 当用户未完成上一步，就进入下一页面时，会在页面中要求用户返回上一步
+""", unsafe_allow_html=True)
+col1, col2, col3 = st.columns(3)
+with col1:
+    img = Image.open("./gif/warn1.png")
+    st.image(img, use_column_width=True)
+    img.close()
+with col2:
+    img = Image.open("./gif/warn2.png")
+    st.image(img, use_column_width=True)
+    img.close()
+with col3:
+    img = Image.open("./gif/warn3.png")
+    st.image(img, use_column_width=True)
+    img.close()
 
 st.markdown("""
-### 4.2 项目稳定性
-
+- 当用户上传空文件、非Point类型的GeoJSON、不包含经纬度信息的CSV文件时，都会在页面中提示错误信息，并要求用户重新上传
 """)
+col1, col2, col3 = st.columns(3)
+with col1:
+    img = Image.open("./gif/warn_empty.png")
+    st.image(img, use_column_width=True, caption="空文件")
+    img.close()
+with col2:
+    img = Image.open("./gif/warn_notpoint.png")
+    st.image(img, use_column_width=True, caption="非Point类型的GeoJSON")
+    img.close()
+with col3:
+    img = Image.open("./gif/warn_notnumber.png")
+    st.image(img, use_column_width=True, caption="无经纬度的CSV")
+    img.close()
+
+
+st.markdown("""
+- 当用户在Step1上传数据后，会提醒用户不要重复上传；如需重新上传，需要先点击“清空数据”按钮
+""")
+
+img = Image.open("./gif/warn_reload.png")
+# 设置图片宽度为页面宽度的80%
+st.image(img, use_column_width=True)
+
+
+st.markdown("""
+- 为避免用户上传GeoJSON时，没有注意坐标系，程序会自动将坐标系转换为WGS84
+""")
+
+img = Image.open("./gif/warn_coor.png")
+st.image(img, use_column_width=True)
+img.close()
 
 
 st.markdown("""
