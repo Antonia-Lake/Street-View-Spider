@@ -151,7 +151,7 @@ def create_mask_and_rate():
                 _mask_fn = file.split('.png')[0] + '_mask.png'
                 _mask_pth = os.path.join(temp_dir.name, _mask_fn)
                 series = pd.Series({'mask_path': _mask_pth, 'green_rate': _green, 'sky_rate': _sky}, name=file)
-                img_mask_green_sky_df = img_mask_green_sky_df.append(series)
+                img_mask_green_sky_df = pd.concat([img_mask_green_sky_df, series], axis=1)
                 _mask.save(_mask_pth)
                 lng, lat, dir = file.split('_')[:3]
 
