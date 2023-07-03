@@ -151,7 +151,6 @@ def create_mask_and_rate():
                 _mask_fn = file.split('.png')[0] + '_mask.png'
                 _mask_pth = os.path.join(temp_dir.name, _mask_fn)
                 img_mask_green_sky_df.loc[file.replace('\\','')] = [_mask_pth, _green, _sky]
-                st.write(img_mask_green_sky_df)
                 _mask.save(_mask_pth)
                 lng, lat, dir = file.split('_')[:3]
 
