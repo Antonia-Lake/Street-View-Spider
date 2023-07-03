@@ -20,11 +20,11 @@
 项目语言为 **Python** :snake: <br>
 建议打开<b><font color=#186cb0>VPN</font></b>，以免网页无法正常加载
 
-| 1. 网页部署      | 2. 街景数据采集 | 3. 语义分割  |
-| ---------------- | --------------- | ------------ |
-| Streamlit        | Requests        | NumPy 1.23.5 |
-| Streamlit-folium | Pillow          | MXNet        |
-|                  |                 | GluonCV      |
+| 1. 网页部署      | 2. 数据处理 | 3. 街景数据采集 | 3. 语义分割  |
+| ---------------- | ----------- | --------------- | ------------ |
+| Streamlit        | GeoPandas   | Requests        | NumPy 1.23.5 |
+| Streamlit-folium | Pandas      | Pillow          | MXNet        |
+|                  | Folium      |                 | GluonCV      |
 
 ### 3.2 关于语义分割 
 <b>语义分割（Semantic Segmentation）</b>是计算机视觉领域的一个重要研究方向，其目的是将图像中的每个像素点分配到特定的类别中，从而实现对图像的像素级别的理解。
