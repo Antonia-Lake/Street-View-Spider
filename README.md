@@ -41,7 +41,7 @@
 ## :four: 项目功能
 
 ### 4.1 使用说明
-- 用户可以使用示例数据；如果想使用个人数据，需要上传街景图像的<b>经纬度位置（点数据）</b>，文件格式为<b><font color=#478e68>CSV</font></b> 或 <b><font color=#478e68>GeoJSON</font></b> \\
+- 用户可以使用示例数据；如果想使用个人数据，需要上传街景图像的<b>经纬度位置（点数据）</b>，文件格式为<b><font color=#478e68>CSV</font></b> 或 <b><font color=#478e68>GeoJSON</font></b> <br>
 :exclamation: 注意，不建议一次上传大于100个点数据，以免被接口被封禁 :exclamation:
 
 <img src="./gif/step1.gif" alt="image" style="zoom:67%;" />
