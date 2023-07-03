@@ -209,10 +209,12 @@ if __name__ == '__main__':
         st.title('Step:four: 获取绿视率和天空率')
 
         # 先获取街景图像的文件名列表
+        
         if 'file_name_list' not in st.session_state.keys():
             st.session_state.file_name_list = []
             for r, d, files in os.walk(st.session_state.image_dataset.name):
                 for file in files:
+                    st.write(file)
                     if file.endswith('.png'):
                         st.session_state.file_name_list.append(file)
 
