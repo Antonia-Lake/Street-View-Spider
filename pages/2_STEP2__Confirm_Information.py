@@ -37,7 +37,7 @@ def trans_gdf_to_df(gdf):
 if __name__ == '__main__':
     st.set_page_config(page_title="确认采样点位置", page_icon=":two:")
     if 'input_data' not in st.session_state.keys():
-        st.title(":warning:请先在STEP1 Upload Data页面\n# 上传采样点数据！")
+        st.title(":warning:请先在STEP1页面\n# 上传采样点数据！")
     else:
         if st.session_state.input_data is None:
             st.title(":warning:请先在STEP1 Upload Data页面\n# 上传采样点数据！")
