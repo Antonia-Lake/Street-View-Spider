@@ -107,14 +107,14 @@ def get_baidu_sv_image():
                 error_img.append(error_data)
 
             if img is not None:
-                # # 在本地请用这个代码
-                # with open(os.path.join(root.name) + r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs),
-                #           "wb") as f:
-                #     f.write(img)
-                # 在服务器上请用这个代码
-                with open(os.path.join(root.name,r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs)),
+                # 在本地请用这个代码
+                with open(os.path.join(root.name) + r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs),
                           "wb") as f:
                     f.write(img)
+                ## 在服务器上请用这个代码
+                # with open(os.path.join(root.name,r'\%s_%s_%s_%s.png' % (wgs_x, wgs_y, directions[h], pitchs)),
+                #           "wb") as f:
+                #     f.write(img)
 
             progress_float = round((i * len(directions) + h + 1) / (len(data) * len(directions)), 3)
             progress_text = '### 爬取进度：{:.2f}%'.format(progress_float * 100)
@@ -201,4 +201,3 @@ if __name__ == '__main__':
             st.markdown('数据采集完成！共爬取{}个点，其中{}个点获取svid失败，{}个点获取图片失败。'
                          .format(count, len(svid_none), len(erro_img)))
             st.subheader(":point_left:请点击左侧菜单栏的STEP4，进行下一步操作")
-
