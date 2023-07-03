@@ -21,6 +21,8 @@ def display_data(_data):
         header = st.subheader("文件预览（前5行），共{}行".format(total_lines))
     else:
         header = st.subheader("文件预览，共{}行".format(total_lines))
+        if total_lines >= 100:
+            st.subheader('数据量较大，建议上传小于100行的数据！')
     df = st.dataframe(_data.head(5))
     return header, df
 
@@ -56,7 +58,7 @@ def check_geojson_shp(geo_df):
 
 def init_page():
     subheader = st.subheader("您可以选择使用示例数据，或上传自己的数据\n### 文件类型为CSV/GeoJSON")
-    radio = st.radio("*默认使用示例数据", ['使用示例数据', '不，我要上传自己的数据'],horizontal=True)
+    radio = st.radio("*默认使用示例数据", ['使用示例数据', '不，我要上传自己的数据'], horizontal=True)
     if radio == '使用示例数据':
         csv_data_path = './example_data/point.csv'
         geojson_data_path = './example_data/pointjson.geojson'
@@ -82,30 +84,37 @@ def init_page():
         if file != st.session_state['step1_previous_file']:
             st.session_state.step1_upload_pressed = True
             if file.name.endswith('.csv'):
+                flag = True
                 st.session_state.input_type = 'csv'
-                data = pd.read_csv(file)
+                try:
+                    data = pd.read_csv(file)
+                except:
+                    flag = False
 
-                col = data.columns.tolist()
-                col.remove(col[0])
-                col.insert(0, 'lng')
-                col.remove(col[1])
-                col.insert(1, 'lat')
-                data = pd.DataFrame(data, columns=col)
-
-                # 检查csv文件
-                flag, warning = check_csv(data)
-                if (not flag) and ('空' in warning):
-                    st.subheader(warning)
-                    st.subheader(":point_up: 请重新上传文件")
-                elif not flag:
-                    display_data(data)
-                    st.subheader(warning)
-                    st.subheader(":point_up: 请重新上传文件")
+                if flag:
+                    # 检查csv文件
+                    flag, warning = check_csv(data)
+                    if (not flag) and ('空' in warning):
+                        st.subheader(warning)
+                        st.subheader(":point_up: 请重新上传文件")
+                    elif not flag:
+                        display_data(data)
+                        st.subheader(warning)
+                        st.subheader(":point_up: 请重新上传文件")
+                    else:
+                        col = data.columns.tolist()
+                        col.remove(col[0])
+                        col.insert(0, 'lng')
+                        col.remove(col[1])
+                        col.insert(1, 'lat')
+                        data = pd.DataFrame(data, columns=col)
+                        header, df = display_data(data)
+                        st.session_state.input_data = data
+                        st.session_state.input_type = 'csv'
+                        subheader.subheader("文件上传成功！")
                 else:
-                    header, df = display_data(data)
-                    st.session_state.input_data = data
-                    st.session_state.input_type = 'csv'
-                    subheader.subheader("文件上传成功！")
+                    st.subheader(':warning: 您上传了空文件！')
+                    st.subheader(":point_up: 请重新上传文件")
 
 
             elif file.name.endswith('.geojson'):
@@ -114,7 +123,6 @@ def init_page():
                 flag, warning = check_geojson_shp(gdf)
 
                 if not flag:
-                    display_data(trans_gdf_to_df(gdf))
                     st.subheader(warning)
                     st.subheader(":point_up: 请重新上传文件")
                     # 如果点击了重新上传按钮，就清空页面
