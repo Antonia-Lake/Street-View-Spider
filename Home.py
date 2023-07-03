@@ -138,12 +138,21 @@ st.markdown(f'<img src=data:image/gif;base64,{data_url} width=500>', unsafe_allo
 st.markdown('')
 
 st.markdown("""
-- 下图为获得的街景和语义分割图像
+- 下图为获得的街景和语义分割图像，以及计算得到的绿视率和天空率
 """, unsafe_allow_html=True)
 img = Image.open("./gif/download.png")
 st.image(img, use_column_width=True)
 st.markdown('')
 img.close()
+
+img = Image.open("./gif/result1.png")
+st.image(img, use_column_width=True)
+st.markdown('')
+img.close()
+
+st.markdown("""
+- 如果有未成功获取的街景图像，会在**Step3**页面中提示用户，并可以在**Step4页面下载错误信息的CSV文件**
+""")
 
 # 4.2 项目稳定性
 st.markdown("""
