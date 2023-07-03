@@ -17,8 +17,8 @@ import zipfile
 # using cpu
 ctx = mx.cpu()
 
-
 st.set_page_config(page_title="获取绿视率和天空率", page_icon=":four:")
+
 
 def check_steps():
     if 'input_data' not in st.session_state.keys():
@@ -33,15 +33,13 @@ def check_steps():
     else:
         return True, None
 
+
 @st.cache_resource
 def generate_model(model_path='./model'):
     return gluoncv.model_zoo.get_model('deeplab_resnet101_citys', pretrained=True, root=model_path)
 
 
-def segment_single_pic(img_path, model, show=True):
-    img = image.imread(img_path)
-    img = test_transform(img, ctx)
-    output = model.predict(img)
+def calculate_green_sky(output, show=True):
     predict = mx.nd.squeeze(mx.nd.argmax(output, 1)).asnumpy()
     green = (predict == 8)
     green_rate = len(predict[green]) / (predict.shape[0] * predict.shape[1])
@@ -54,32 +52,71 @@ def segment_single_pic(img_path, model, show=True):
     return mask, green_rate, sky_rate
 
 
-def creat_svdata_zip_download():
-    # 以二进制格式打开zip文件
+def create_zip(temp_dir, zip_fn, include_csv):
+    '''
+    将temp_dir中的文件打包成zip文件, 记得要将zip_root.cleanup()
+    :param temp_dir: TemporaryDirectory
+    :param zip_fn: str
+    :param include_csv: bool
+    :return: zip_data, zip_root
+    '''
+    zip_root = tempfile.TemporaryDirectory()
+    zip_file = os.path.join(zip_root.name, zip_fn)
 
-    # 将图片和csv打包成zip文件
-    _zip_root = tempfile.TemporaryDirectory()
-    zip_file = os.path.join(_zip_root.name, 'street_view_data.zip')
-
-    with zipfile.ZipFile(zip_file, 'w') as zf:
-        for _root, dirs, files in os.walk(st.session_state.image_dataset.name):
+    with zipfile.ZipFile(zip_file, 'w') as zipf:
+        for r, d, files in os.walk(temp_dir.name):
             for file in files:
-                if file.endswith('.png') or file.endswith('.csv'):
-                    file_path = os.path.join(_root, file)  # 获取文件的绝对路径
-                    arc_name = os.path.relpath(file_path, st.session_state.image_dataset.name)
-                    zf.write(file_path, arcname=arc_name)
+                if include_csv:
+                    if file.endswith('.png') or file.endswith('.csv'):
+                        file_path = os.path.join(r, file)  # 获取文件的绝对路径
+                        arc_name = file_path[len(temp_dir.name) + 1:]
+                        zipf.write(file_path, arcname=arc_name)
+                else:
+                    if file.endswith('.png'):
+                        file_path = os.path.join(r, file)
+                        arc_name = file_path[len(temp_dir.name) + 1:]
+                        zipf.write(file_path, arcname=arc_name)
 
     with open(zip_file, 'rb') as f:
         zip_data = f.read()
 
-    return zip_data
+    return zip_data, zip_root
 
 
-def create_segdata_download():
-    temp_dir = tempfile.TemporaryDirectory()
+def create_result(green_sky_df):
+    '''
+    将green_sky_df转换成csv或geojson文件, 记得要将temp_result_dir.cleanup()
+    :param green_sky_df:
+    :return:
+    '''
     temp_result_dir = tempfile.TemporaryDirectory()
-    zip_root = tempfile.TemporaryDirectory()
-    zip_file = os.path.join(zip_root.name, 'segmentation_result.zip')
+
+    if st.session_state.input_type == 'csv':
+        green_sky_df.to_csv(os.path.join(temp_result_dir.name, 'green_sky_rate.csv'), index=False)
+    elif st.session_state.input_type == 'geojson':
+        gdf = trans_df_to_gdf(green_sky_df)
+        gdf.to_file(os.path.join(temp_result_dir.name, 'green_sky_rate.geojson'), driver='GeoJSON')
+
+    if st.session_state.input_type == 'csv':
+        with open(os.path.join(temp_result_dir.name, 'green_sky_rate.csv'), 'rb') as f:
+            result_data = f.read()
+    elif st.session_state.input_type == 'geojson':
+        with open(os.path.join(temp_result_dir.name, 'green_sky_rate.geojson'), 'rb') as f:
+            result_data = f.read()
+
+    return result_data, temp_result_dir
+
+
+def create_mask_and_rate():
+    '''
+
+    :return: green_sky_df, img_mask_green_sky_df, mask_temp_dir
+    '''
+
+    # 这个是存mask的临时文件夹
+    temp_dir = tempfile.TemporaryDirectory()
+
+    img_mask_green_sky_df = pd.DataFrame(columns=['mask_path', 'green_rate', 'sky_rate'])
 
     if st.session_state.input_type == 'csv':
         green_sky_df = st.session_state.input_data
@@ -101,17 +138,29 @@ def create_segdata_download():
             green_sky_df['w_gre'] = np.nan
             green_sky_df['w_sky'] = np.nan
 
-    # 先写入临时文件夹temp_dir
+    model = generate_model()
+
     for r, d, files in os.walk(st.session_state.image_dataset.name):
         for file in files:
             if file.endswith('.png'):
                 img_path = os.path.join(r, file)
-                _mask, _green, _sky = segment_single_pic(img_path, st.session_state.model_loaded, show=False)
+                img = image.imread(img_path)
+                output = model.predict(test_transform(img, ctx))
+                _mask, _green, _sky = calculate_green_sky(output, show=False)
+
                 _mask_fn = file.split('.png')[0] + '_mask.png'
-                _mask.save(os.path.join(temp_dir.name, _mask_fn))
+                _mask_pth = os.path.join(temp_dir.name, _mask_fn)
+                series = pd.Series({'mask_path': _mask_pth, 'green_rate': _green, 'sky_rate': _sky}, name=file)
+                img_mask_green_sky_df = img_mask_green_sky_df.append(series)
+                _mask.save(_mask_pth)
                 lng, lat, dir = file.split('_')[:3]
+
+                # lng = float(lng)
+                # lat = float(lat)
+
                 lng = float(lng.replace('\\', ''))
                 lat = float(lat.replace('\\', ''))
+
                 if dir == '0':
                     dir = 'n_'
                 elif dir == '90':
@@ -123,41 +172,15 @@ def create_segdata_download():
                 green_sky_df.loc[(green_sky_df['lng'] == lng) & (green_sky_df['lat'] == lat), dir + 'gre'] = _green
                 green_sky_df.loc[(green_sky_df['lng'] == lng) & (green_sky_df['lat'] == lat), dir + 'sky'] = _sky
 
-    if st.session_state.input_type == 'csv':
-        green_sky_df.to_csv(os.path.join(temp_result_dir.name, 'green_sky_rate.csv'), index=False)
-    elif st.session_state.input_type == 'geojson':
-        gdf = trans_df_to_gdf(green_sky_df)
-        gdf.to_file(os.path.join(temp_result_dir.name, 'green_sky_rate.geojson'), driver='GeoJSON')
-
-    # 将图片和csv打包成zip文件
-    with zipfile.ZipFile(zip_file, 'w') as zipf:
-        for r, d, files in os.walk(temp_dir.name):
-            for file in files:
-                if file.endswith('.png'):
-                    file_path = os.path.join(r, file)  # 获取文件的绝对路径
-                    arc_name = file_path[len(temp_dir.name)+1:]
-                    zipf.write(file_path, arcname=arc_name)
-
-    temp_dir.cleanup()
-
-    with open(zip_file, 'rb') as f:
-        zip_data = f.read()
-    if st.session_state.input_type == 'csv':
-        with open(os.path.join(temp_result_dir.name, 'green_sky_rate.csv'), 'rb') as f:
-            result_data = f.read()
-    elif st.session_state.input_type == 'geojson':
-        with open(os.path.join(temp_result_dir.name, 'green_sky_rate.geojson'), 'rb') as f:
-            result_data = f.read()
-
-    return zip_data, result_data, zip_root, temp_result_dir
+    return green_sky_df, img_mask_green_sky_df, temp_dir
 
 
 def trans_df_to_gdf(df):
     df_ = df.drop(columns=['geometry'], inplace=False)
     gdf = gpd.GeoDataFrame(df_, geometry=gpd.points_from_xy(df_.lng, df_.lat))
-    # 删除'geometry'列
     gdf.crs = 'EPSG:4326'
     return gdf
+
 
 def mark_downloaded():
     if "download" not in st.session_state.keys():
@@ -173,9 +196,9 @@ if __name__ == '__main__':
     # file_name_list: 用于存储街景图像的文件名，从STEP3中获取
     # 如果没有这个key，说明没有获取过，需要获取
 
-    # model_loaded: 用于标记是否已经读取过model
-    # 如果没有读取过，那么session_staet中没有这个key
-    # 如果读取过，就有这个key，并且value为读取的模型
+    # segment_completed: 用于标记是否已经读取过model
+    # 如果没有读取过，那么session_state中没有这个key
+    # 如果读取过，就有这个key
 
     # step4_selectbox_result: 用于存储上一次选择的街景图像的文件名
     # 数据类型为 tuple (img_file, mask, green_rate, sky_rate)
@@ -197,13 +220,19 @@ if __name__ == '__main__':
         # 如果没有街景图像，说明没有成功获取
         if len(st.session_state.file_name_list) == 0:
             st.title(':warning: 抱歉！未能成功获取街景图像！无法计算绿视率和天空率！')
-            st.subheader('这可能是因为您曾经在STEP3未运行结束时切换了页面，导致程序中断。请您返回STEP1，重新上传采样点数据。')
+            st.subheader(
+                '这可能是因为您曾经在STEP3未运行结束时切换了页面，导致程序中断。请您返回STEP1，重新上传采样点数据。')
 
         # 如果有街景图像，那么就继续
         else:
-            # 如果没有加载过模型，那么就加载模型
-            if 'model_loaded' not in st.session_state.keys():
-                st.session_state.model_loaded = generate_model()
+            # 先判断是否已经分割和计算过绿视率和天空率 segment_completed
+            if 'step4_selectbox_result' not in st.session_state.keys():
+                temp_notice = st.markdown(
+                    '##### :exclamation: 语义分割结果、绿视率和天空率正在计算中，可能需要一些时间，请耐心等待...')
+
+                st.session_state['green_sky_df'], st.session_state['mask'], st.session_state[
+                    'mask_dataset'] = create_mask_and_rate()
+                temp_notice.empty()
 
             file_name_list = st.session_state.file_name_list
             st.subheader('请在下拉框中选择一张街景图像')
@@ -213,72 +242,46 @@ if __name__ == '__main__':
                 file_name_list
             )
 
-            # 如果没有选择过，那么就读取第一张街景图像，并创建这个key
-            if ('step4_selectbox_result' not in st.session_state.keys()) or (
-                    option != st.session_state.step4_selectbox_result[0]):
-                img_path = os.path.join(st.session_state.image_dataset.name, option)
-                img_temp = Image.open(img_path)
+            img_path = os.path.join(st.session_state.image_dataset.name, option)
+            img_temp = Image.open(img_path)
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown('#### :point_down:街景图像', )
-                    st.image(img_temp, use_column_width=True)
-                with col2:
-                    st.markdown('#### :point_down:语义分割结果')
-                    mask, green_rate, sky_rate = segment_single_pic(img_path, st.session_state.model_loaded)
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown('#### :point_down:街景图像')
+                st.image(img_temp, use_column_width=True)
+            with col2:
+                results = st.session_state.mask.loc[option, :].values
+                st.markdown('#### :point_down:语义分割结果')
+                mask = Image.open(results[0])
+                green_rate = results[1]
+                sky_rate = results[2]
+                st.image(mask, use_column_width=True)
 
-                st.markdown('#### :deciduous_tree: 绿视率: {:.2f}%'.format(green_rate * 100))
-                st.markdown('#### :sunrise: 天空率: {:.2f}%'.format(sky_rate * 100))
+            img_temp.close()
+            mask.close()
 
-                st.session_state.step4_selectbox_result = (option, mask, green_rate, sky_rate)
-                st.markdown('')
+            st.markdown('#### :deciduous_tree: 绿视率: {:.2f}%'.format(green_rate * 100))
+            st.markdown('#### :sunrise: 天空率: {:.2f}%'.format(sky_rate * 100))
 
-                img_temp.close()
-                mask = None
-
-            else:
-                img_path, mask, green_rate, sky_rate = st.session_state.step4_selectbox_result
-                img_path = os.path.join(st.session_state.image_dataset.name, img_path)
-                img_temp = Image.open(img_path)
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown('#### :point_down:街景图像', )
-                    st.image(img_temp, use_column_width=True)
-                with col2:
-                    st.markdown('#### :point_down:语义分割结果')
-                    st.image(mask, use_column_width=True)
-
-                img_temp.close()
-                mask = None
-
-                st.markdown('#### :deciduous_tree: 绿视率: {:.2f}%'.format(green_rate * 100))
-                st.markdown('#### :sunrise: 天空率: {:.2f}%'.format(sky_rate * 100))
-
+            st.session_state.step4_selectbox_result = True
+            st.markdown('')
 
             st.markdown('#### 如果您想获取所有街景图像的语义分割结果、绿视率和天空率')
             st.markdown('#### :point_down: 请点击下方按钮')
 
-            if 'step4_seg_loaded' not in st.session_state.keys():
-                temp_notice = st.markdown(
-                    '##### :exclamation: 语义分割结果、绿视率和天空率正在计算中，可能需要一些时间，请耐心等待...')
-
+            svdata = create_zip(st.session_state.image_dataset, 'street_view_data.zip', True)
             st.download_button(
                 label="点击下载街景图片和错误信息压缩包(.zip)",
-                data=creat_svdata_zip_download(),
+                data=svdata[0],
                 file_name='street_view_data.zip',
                 mime='application/zip',
                 key='svdata'
             )
 
-            if 'step4_seg_loaded' not in st.session_state.keys():
-                st.session_state.step4_seg_loaded = create_segdata_download()
-                st.session_state.step4_seg_loaded[2].cleanup()
-                st.session_state.step4_seg_loaded[3].cleanup()
-                temp_notice.empty()
-
+            segdata = create_zip(st.session_state.mask_dataset, 'segmentation_result.zip', False)
             st.download_button(
                 label="点击下载语义分割图像(.zip)",
-                data=st.session_state.step4_seg_loaded[0],
+                data=segdata[0],
                 file_name='segmentation_result.zip',
                 mime='application/zip',
                 key='segdata'
@@ -289,13 +292,17 @@ if __name__ == '__main__':
             elif st.session_state.input_type == 'csv':
                 mime_ = 'text/csv'
 
+            ratedata = create_result(st.session_state['green_sky_df'])
             st.download_button(
                 label="点击下载带有绿视率和天空率的原始信息(.{})".format(st.session_state.input_type),
-                data=st.session_state.step4_seg_loaded[1],
+                data=ratedata[0],
                 file_name='original_data_with_rate.{}'.format(st.session_state.input_type),
                 mime=mime_,
                 key='rate'
             )
 
             st.markdown('#### 到这里，您已经完成了所有的步骤:sparkling_heart:')
-            st.markdown('#### 如果您喜欢这个项目，欢迎star:star:[我的GitHub仓库](https://github.com/Antonia-Lake/Street-View-AOI-Spider):hugging_face:')
+            st.markdown(
+                '#### 如果您喜欢这个项目，欢迎star:star:[我的GitHub仓库](https://github.com/Antonia-Lake/Street-View-AOI-Spider):hugging_face:')
+
+            # st.session_state.model_loaded = None
