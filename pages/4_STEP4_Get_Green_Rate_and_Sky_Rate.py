@@ -234,7 +234,7 @@ if __name__ == '__main__':
                 temp_notice.empty()
 
             file_name_list = st.session_state.file_name_list
-            st.subheader('请在下拉框中选择一张街景图像')
+            st.subheader('可下拉框中选择一张街景图像，预览结果')
 
             option = st.selectbox(
                 "默认显示第一张街景图像的语义分割结果，并计算绿视率和天空率",
@@ -264,6 +264,11 @@ if __name__ == '__main__':
 
             st.session_state.step4_selectbox_result = True
             st.markdown('')
+
+
+            st.markdown('#### 我们在原数据的基础上，添加了不同方向的绿视率、天空率字段')
+            st.markdown('如： <b><font color=green>n_gre</font></b> 字段代表正北方向的绿视率， <b><font color=green>n_sky</font></b> 字段代表正北方向的天空率',unsafe_allow_html=True)
+            st.dataframe(st.session_state.green_sky_df.head(5))
 
             st.markdown('#### 如果您想获取所有街景图像的语义分割结果、绿视率和天空率')
             st.markdown('#### :point_down: 请点击下方按钮')
