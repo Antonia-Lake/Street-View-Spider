@@ -250,7 +250,7 @@ if __name__ == '__main__':
                 st.markdown('#### :point_down:街景图像')
                 st.image(img_temp, use_column_width=True)
             with col2:
-                results = st.session_state.mask.loc[option, :].values
+                results = st.session_state.mask.loc[option.replace('\\', ''), :].values
                 st.markdown('#### :point_down:语义分割结果')
                 mask = Image.open(results[0])
                 green_rate = results[1]
