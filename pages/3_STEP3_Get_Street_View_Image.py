@@ -1,10 +1,7 @@
 import streamlit as st
-import subprocess
 import time
 import os
-import glob
 import tempfile
-import zipfile
 import sys
 
 sys.path.append('..')
@@ -138,6 +135,7 @@ def get_baidu_sv_image():
 
 
 if __name__ == '__main__':
+    st.set_page_config(page_title='街景图像爬取', page_icon=':three:', layout='wide')
     check = check_steps()
     if check[0]:
         st.title("Step:three: 获取街景图片")
