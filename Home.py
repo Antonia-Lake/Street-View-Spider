@@ -25,6 +25,8 @@ st.markdown(text, unsafe_allow_html=True)
 text_envi = """
 ## :three: 环境依赖-技术路线
 项目语言为:snake: **Python** 
+<br>
+建议打开<b><font color=#186cb0>VPN</font></b>，以免网页无法正常加载
 """
 st.markdown(text_envi, unsafe_allow_html=True)
 
