@@ -203,3 +203,4 @@ if __name__ == '__main__':
             st.markdown('数据采集完成！共爬取{}个点，其中{}个点获取svid失败，{}个点获取图片失败。'
                          .format(count, len(svid_none), len(erro_img)))
             st.subheader(":point_left:请点击左侧菜单栏的STEP4，进行下一步操作")
+
