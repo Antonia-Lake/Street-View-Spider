@@ -6,8 +6,8 @@ st.set_page_config(page_title="百度街景数据采集+街景语义分割工具
 text = """
 # :house_with_garden: 这是一个百度街景数据采集工具
 ## :one: 作者信息
-<b><font size=4>姓名：来陈璐</font></b>\\
-<b><font size=4>班级：21级地理科学拔尖班</font></b>
+<b><font size=4>GitHub: Antonia-Lake</font></b>\\
+<b><font size=4>Interested in: GIS</font></b>
 ## :two: 项目简介
 随着城市化进程的不断推进，城市宜居性越来越受到人们的重视，越来越多的科学证据表明，城市建成环境在影响人类健康上发挥着重要作用。街道作为城市的基础单元，受到了众多研究者的关注；其中，
 <b><font color=#186cb0>街景图像（Street View Image）</font> </b>
