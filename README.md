@@ -1,11 +1,6 @@
 # :house_with_garden: 百度街景数据采集+街景语义分割工具
 
-## :one: 作者信息
-
-姓名：来陈璐<br>
-班级：21级地理科学拔尖班
-
-## :two: 项目简介
+## :one: 项目简介
 随着城市化进程的不断推进，城市宜居性越来越受到人们的重视，越来越多的科学证据表明，城市建成环境在影响人类健康上发挥着重要作用。街道作为城市的基础单元，受到了众多研究者的关注；其中，<b><font color=#186cb0>街景图像（Street View Image）</font> </b>是研究街道品质的重要数据来源，可以直观反映街道提供的视觉信息。
 
 <b>但是，对于缺乏编程经验的研究者而言，获取街景图像，并从图像中获取街道评价指标具有一定的难度。</b>
@@ -14,8 +9,8 @@
 
 因此，本项目针对该痛点，开发了一个<b><font color=#186cb0>交互式网页</font></b>，便于研究者获取<b><font color=#186cb0>街景图像</font></b>，并根据街景图像得到常用的街道评价指标（<b><font color=#186cb0>绿视率和天空率</font></b>）。最重要的是，交互式网页<b>避免了繁琐的代码部署过程</b>，使得数据获取更加简单快捷。
 
-## :three: 环境依赖 - 技术路线
-### 3.1 环境依赖
+## :two: 环境依赖 - 技术路线
+### 2.1 环境依赖
 
 项目语言为 **Python** :snake: <br>
 建议打开<b><font color=#186cb0>VPN</font></b>，以免网页无法正常加载
@@ -26,7 +21,7 @@
 | Streamlit-folium | Pandas      | Pillow          | MXNet        |
 |                  | Folium      |                 | GluonCV      |
 
-### 3.2 关于语义分割 
+### 2.2 关于语义分割 
 <b>语义分割（Semantic Segmentation）</b>是计算机视觉领域的一个重要研究方向，其目的是将图像中的每个像素点分配到特定的类别中，从而实现对图像的像素级别的理解。
 
 <b>语义分割</b>的结果可以用于计算<b><font color=#186cb0>绿视率</font></b>和<b><font color=#186cb0>天空率</font></b>，具体计算方法如下：
@@ -38,9 +33,9 @@
 
 如果您希望更换预训练模型，可以在[项目仓库](https://github.com/Antonia-Lake/Street-View-AOI-Spider)下载项目源代码，并参考[GluonCV](https://cv.gluon.ai/model_zoo/segmentation.html)官方文档，更换预训练模型。
 
-## :four: 项目功能
+## :three: 项目功能
 
-### 4.1 使用说明
+### 3.1 使用说明
 - 用户可以使用示例数据；如果想使用个人数据，需要上传街景图像的<b>经纬度位置（点数据）</b>，文件格式为<b><font color=#478e68>CSV</font></b> 或 <b><font color=#478e68>GeoJSON</font></b> <br>
 :exclamation: 注意，不建议一次上传大于100个点数据，以免被接口被封禁 :exclamation:
 
@@ -68,7 +63,7 @@
 
 <img src="./gif/result1.png" alt="image" style="zoom:70%;" />
 
-### 4.2 项目稳定性说明
+### 3.2 项目稳定性说明
 
 <b>当用户未按照要求操作时，会在页面中提示错误信息，提醒用户按照正确流程操作，避免程序崩溃。</b> 
 
@@ -98,7 +93,7 @@
 
 ![image](./gif/warn_coor.png)
 
-## :five: 如果您对该项目感兴趣
+## :four: 如果您对该项目感兴趣
 
 - 您可以访问我的[项目仓库](https://github.com/Antonia-Lake/Street-View-AOI-Spider)，查看源代码
 - 如果您希望对该项目进行改进，欢迎fork项目并提交pull request
